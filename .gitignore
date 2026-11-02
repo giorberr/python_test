@@ -1,0 +1,9 @@
+# Python-generated files and local virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Personal drafts, completion history, recovery backups, and temporary saves
+/data/*.json
+/data/.*.tmp
