@@ -8,6 +8,7 @@ A local desktop app for learning Python and practicing algorithms through editab
 app.py                   # Start the desktop app
 practice/                # Application source code
     app.py               # Desktop interface and mock sessions
+    editor.py            # Code editor and indentation shortcuts
     exercises.py         # Editable problem descriptions, starters, and test cases
     checker.py           # Runs your code in a separate process
     validators.py        # Checks answers, including equivalent outputs
@@ -33,6 +34,13 @@ python app.py
 ```
 
 Choose an exercise, edit its starter function, and select **Run tests**. Results show each case and, for failures, a valid expected example and your actual value or an exception. `print()` output and Python stderr appear below the results. Output and long values are truncated to keep the interface responsive; `input()` is not available—use the function arguments.
+
+### Editor shortcuts
+
+- **Tab:** insert spaces up to the next four-column stop. With text selected, indent the selected lines by four spaces without replacing the code.
+- **Shift+Tab:** remove up to four columns of indentation from the current or selected lines.
+- **Ctrl+Tab / Ctrl+Shift+Tab:** move keyboard focus out of the editor, forward or backward.
+- Indentation changes can be undone and redone as single actions. On lines you indent or outdent, existing leading tabs are converted to equivalent spaces using Python's eight-column tab stops; tabs inside the code itself are not rewritten.
 
 Drafts are saved when you switch exercises, run tests, select **Save draft**, or close the app. `data/practice_progress.json` stores drafts and historical completion marks separately from the source code. Existing progress was moved there during the reorganization without changing its contents. Saves replace the file atomically; malformed data is backed up as `data/practice_progress.corrupt-<timestamp>.json` before starting fresh. If a backup cannot be made, saving is blocked rather than overwriting the original. A failed save blocks exercise switching and prompts before closing.
 

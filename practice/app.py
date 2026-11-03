@@ -8,6 +8,7 @@ from pathlib import Path
 from tkinter import messagebox, scrolledtext, ttk
 
 from .checker import check
+from .editor import CodeEditor
 from .exercises import EXERCISES
 from .progress import ProgressStore
 
@@ -83,7 +84,7 @@ class PracticeApp:
         self.description.pack(anchor="w", fill="x", pady=(0, 8))
         main.bind("<Configure>", self.resize_description)
         ttk.Label(main, text="YOUR PYTHON CODE").pack(anchor="w")
-        self.editor = scrolledtext.ScrolledText(
+        self.editor = CodeEditor(
             main, height=14, font=("Consolas", 11), undo=True, wrap="none"
         )
         self.editor.pack(fill="both", expand=True, pady=5)

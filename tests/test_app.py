@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from practice import app
+from practice.editor import CodeEditor
 from practice.exercises import EXERCISES
 
 
@@ -53,6 +54,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(str(self.gui.run_button["state"]), "normal")
 
     def test_widgets_and_all_exercises(self):
+        self.assertIsInstance(self.gui.editor, CodeEditor)
         self.assertEqual(self.gui.listbox.size(), 15)
         for index, exercise in enumerate(EXERCISES):
             with self.subTest(exercise=exercise["id"]):
