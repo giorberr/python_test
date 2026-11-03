@@ -9,6 +9,7 @@ app.py                   # Start the desktop app
 practice/                # Application source code
     app.py               # Desktop interface and mock sessions
     editor.py            # Code editor and indentation shortcuts
+    theme.py             # Shared dark palette and widget styling
     exercises.py         # Editable problem descriptions, starters, and test cases
     checker.py           # Runs your code in a separate process
     validators.py        # Checks answers, including equivalent outputs
@@ -32,6 +33,8 @@ Install Python 3.9 or newer with Tkinter (included in the standard Windows Pytho
 ```sh
 python app.py
 ```
+
+The interface uses dark mode by default, including the editor, test results, exercise list, dropdowns, and scrollbars. Native dialogs and window decorations follow your operating system's appearance.
 
 Choose an exercise, edit its starter function, and select **Run tests**. Results show each case and, for failures, a valid expected example and your actual value or an exception. `print()` output and Python stderr appear below the results. Output and long values are truncated to keep the interface responsive; `input()` is not available—use the function arguments.
 

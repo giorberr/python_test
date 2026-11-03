@@ -11,6 +11,7 @@ from unittest.mock import patch
 from practice import app
 from practice.editor import CodeEditor
 from practice.exercises import EXERCISES
+from practice.theme import DARK_COLORS
 
 
 class AppTests(unittest.TestCase):
@@ -64,6 +65,84 @@ class AppTests(unittest.TestCase):
                 )
                 self.assertIn(exercise["title"], self.gui.title["text"])
                 self.root.update()
+
+    def test_dark_theme_colors_and_text_selection(self):
+        colors = DARK_COLORS
+        self.assertEqual(self.gui.style.theme_use(), "clam")
+        self.assertEqual(self.root["background"], colors["background"])
+        for widget in (self.gui.listbox, self.gui.editor, self.gui.results):
+            with self.subTest(widget=widget.winfo_class()):
+                self.assertEqual(widget["background"], colors["surface"])
+                self.assertEqual(widget["foreground"], colors["foreground"])
+                self.assertEqual(widget["selectbackground"], colors["selection"])
+                self.assertEqual(widget["selectforeground"], colors["foreground"])
+                self.assertEqual(widget["highlightcolor"], colors["accent"])
+        self.assertEqual(self.gui.editor["insertbackground"], colors["foreground"])
+        self.assertEqual(
+            self.gui.editor["inactiveselectbackground"], colors["selection"]
+        )
+        self.assertEqual(str(self.gui.results["state"]), "disabled")
+        for text in (self.gui.editor, self.gui.results):
+            self.assertEqual(text.frame["background"], colors["background"])
+            self.assertIsInstance(text.vbar, app.ttk.Scrollbar)
+            self.assertEqual(str(text.vbar["takefocus"]), "0")
+
+    def test_themed_text_panes_scroll_in_both_directions(self):
+        self.root.deiconify()
+        for text in (self.gui.editor, self.gui.results):
+            with self.subTest(pane=str(text)):
+                text.configure(state="normal")
+                text.delete("1.0", "end")
+                text.insert("1.0", "line\n" * 200)
+                self.root.update()
+                text.yview_moveto(1.0)
+                self.root.update()
+                self.assertGreater(text.yview()[0], 0.0)
+                self.assertEqual(text.vbar.get(), text.yview())
+                self.assertAlmostEqual(text.vbar.get()[1], 1.0)
+                self.root.tk.call(text.vbar["command"], "moveto", 0)
+                self.root.update()
+                self.assertEqual(text.yview()[0], 0.0)
+
+    def test_dark_theme_control_states(self):
+        style = self.gui.style
+        for name, option, state, color in (
+            ("TFrame", "background", (), "background"),
+            ("TFrame", "background", ("disabled",), "background"),
+            ("TFrame", "background", ("active",), "hover"),
+            (".", "selectbackground", ("!focus",), "selection"),
+            (".", "selectforeground", ("!focus",), "foreground"),
+            ("TLabel", "foreground", (), "foreground"),
+            ("Muted.TLabel", "foreground", (), "muted"),
+            ("TButton", "background", (), "surface"),
+            ("TButton", "background", ("active",), "hover"),
+            ("TButton", "background", ("pressed",), "pressed"),
+            ("TButton", "lightcolor", ("pressed",), "border"),
+            ("TButton", "darkcolor", ("pressed",), "border"),
+            ("TButton", "foreground", ("disabled",), "disabled"),
+            ("TCombobox", "fieldbackground", ("readonly",), "surface"),
+            ("TCombobox", "foreground", ("readonly",), "foreground"),
+            ("Vertical.TScrollbar", "background", (), "border"),
+            ("Vertical.TScrollbar", "background", ("active",), "hover"),
+        ):
+            with self.subTest(style=name, option=option, state=state):
+                self.assertEqual(style.lookup(name, option, state), DARK_COLORS[color])
+
+    def test_combobox_popup_uses_dark_colors(self):
+        popup = self.root.tk.call(
+            "ttk::combobox::PopdownWindow", str(self.gui.mock_choice)
+        )
+        for option, color in (
+            ("background", "surface"),
+            ("foreground", "foreground"),
+            ("selectbackground", "selection"),
+            ("selectforeground", "foreground"),
+        ):
+            with self.subTest(option=option):
+                self.assertEqual(
+                    self.root.tk.call(f"{popup}.f.l", "cget", f"-{option}"),
+                    DARK_COLORS[color],
+                )
 
     def test_drafts_save_switch_and_reload(self):
         code = "def contains_duplicate(nums):\n    return len(set(nums)) != len(nums)\n# 🙂\n"

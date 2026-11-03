@@ -11,6 +11,7 @@ from .checker import check
 from .editor import CodeEditor
 from .exercises import EXERCISES
 from .progress import ProgressStore
+from .theme import apply_dark_theme
 
 DATA_FILE = Path(__file__).resolve().parent.parent / 'data' / 'practice_progress.json'
 MOCKS = {
@@ -27,6 +28,7 @@ class PracticeApp:
         root.title("Python Algorithm Practice")
         root.geometry("1200x800")
         root.minsize(800, 600)
+        self.style = apply_dark_theme(root)
         self.store = ProgressStore(
             DATA_FILE, (exercise["id"] for exercise in EXERCISES)
         )
@@ -46,7 +48,7 @@ class PracticeApp:
         ttk.Label(header, text="PYTHON PRACTICE", font=("Segoe UI", 18, "bold")).pack(
             side="left"
         )
-        self.status = ttk.Label(header, text="")
+        self.status = ttk.Label(header, text="", style="Muted.TLabel")
         self.status.pack(side="right")
         controls = ttk.Frame(root, padding=(10, 0, 10, 8))
         controls.pack(fill="x")
@@ -59,7 +61,9 @@ class PracticeApp:
             side="left", padx=6
         )
         ttk.Button(controls, text="Exit mock", command=self.end_mock).pack(side="left")
-        self.timer_label = ttk.Label(controls, text="Practice mode")
+        self.timer_label = ttk.Label(
+            controls, text="Practice mode", style="Muted.TLabel"
+        )
         self.timer_label.pack(side="right")
 
         body = ttk.Panedwindow(root, orient="horizontal")
@@ -78,16 +82,16 @@ class PracticeApp:
         body.add(main, weight=4)
         self.title = ttk.Label(main, font=("Segoe UI", 16, "bold"), wraplength=800)
         self.title.pack(anchor="w")
-        self.meta = ttk.Label(main)
+        self.meta = ttk.Label(main, style="Muted.TLabel")
         self.meta.pack(anchor="w", pady=(2, 8))
         self.description = ttk.Label(main, wraplength=800, justify="left")
         self.description.pack(anchor="w", fill="x", pady=(0, 8))
         main.bind("<Configure>", self.resize_description)
         ttk.Label(main, text="YOUR PYTHON CODE").pack(anchor="w")
-        self.editor = CodeEditor(
-            main, height=14, font=("Consolas", 11), undo=True, wrap="none"
+        self.editor = self.create_text_pane(
+            main, height=14, font=("Consolas", 11), undo=True, wrap="none",
+            text_class=CodeEditor,
         )
-        self.editor.pack(fill="both", expand=True, pady=5)
         buttons = ttk.Frame(main)
         buttons.pack(fill="x")
         self.run_button = ttk.Button(buttons, text="Run tests", command=self.run_tests)
@@ -99,16 +103,30 @@ class PracticeApp:
             side="left"
         )
         ttk.Label(main, text="TEST RESULTS").pack(anchor="w", pady=(10, 0))
-        self.results = scrolledtext.ScrolledText(
+        self.results = self.create_text_pane(
             main, height=9, font=("Consolas", 10), state="disabled"
         )
-        self.results.pack(fill="both", expand=True, pady=5)
         self.refresh_list()
         self.listbox.selection_set(0)
         self.show_exercise(0)
         self.tick()
         self._poll_after = self.root.after(100, self.poll_results)
         root.protocol("WM_DELETE_WINDOW", self.close)
+
+    def create_text_pane(
+        self, parent, text_class=scrolledtext.ScrolledText, **options
+    ):
+        text = text_class(parent, **options)
+        text.frame.configure(background=self.style.lookup("TFrame", "background"))
+        # Preserve editor bindings while replacing Windows' light native scrollbar.
+        text.vbar.destroy()
+        text.vbar = ttk.Scrollbar(
+            text.frame, orient="vertical", command=text.yview, takefocus=False
+        )
+        text.vbar.pack(side="right", fill="y")
+        text.configure(yscrollcommand=text.vbar.set)
+        text.pack(fill="both", expand=True, pady=5)
+        return text
 
     def load(self):
         data = self.store.load()
