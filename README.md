@@ -8,6 +8,7 @@ A local desktop app for learning Python and practicing algorithms through editab
 app.py                   # Start the desktop app
 practice/                # Application source code
     app.py               # Desktop interface and mock sessions
+    display.py           # Windows DPI awareness and scaled layout dimensions
     editor.py            # Code editor and indentation shortcuts
     theme.py             # Shared dark palette and widget styling
     exercises.py         # Editable problem descriptions, starters, and test cases
@@ -35,6 +36,8 @@ python app.py
 ```
 
 The interface uses dark mode by default, including the editor, test results, exercise list, dropdowns, and scrollbars. Native dialogs and window decorations follow your operating system's appearance.
+
+On Windows, the app enables system-DPI awareness before opening the window, keeping text sharp at the system display scale. Window sizes, spacing, and scrollbars scale with DPI, and startup sizes are capped to the usable screen area. Restart the app after changing Windows display scaling. For compatibility with Tk 8.6, this is system-DPI awareness, not live per-monitor rescaling; Windows may still rescale the app on monitors with a different scale.
 
 Choose an exercise, edit its starter function, and select **Run tests**. Results show each case and, for failures, a valid expected example and your actual value or an exception. `print()` output and Python stderr appear below the results. Output and long values are truncated to keep the interface responsive; `input()` is not available—use the function arguments.
 
@@ -75,4 +78,4 @@ To run only the backend checks:
 python -m unittest tests.test_checker tests.test_exercises -v
 ```
 
-The suite checks every exercise's expected values against independent reference algorithms, runs reference and deliberately incorrect submissions, covers checker failures/timeouts/output limits, verifies safe progress-file recovery, and exercises real Tk widgets and mock-timer expiry. Tests use temporary progress files and do not modify your saved practice. Tk tests are skipped if no display is available. The suite was verified on Windows with Python 3.15 and Tk 9; other supported Python/Tk versions were not tested.
+The suite checks every exercise's expected values against independent reference algorithms, runs reference and deliberately incorrect submissions, covers checker failures/timeouts/output limits, verifies safe progress-file recovery, and exercises real Tk widgets and mock-timer expiry. Tests use temporary progress files and do not modify your saved practice. Tk tests are skipped if no display is available. The suite has been verified on Windows with Python 3.15/Tk 9 and Python 3.14.5/Tk 8.6.15. DPI coverage includes simulated 100%, 125%, 150%, and 200% layout checks and a real Windows startup check at 125%; mixed-DPI monitor transitions have not been verified.

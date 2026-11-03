@@ -17,7 +17,7 @@ DARK_COLORS = {
 }
 
 
-def apply_dark_theme(root):
+def apply_dark_theme(root, scale=1.0):
     colors = DARK_COLORS
     style = ttk.Style(root)
     # Native Windows themes ignore several color settings, so use a portable theme.
@@ -47,7 +47,9 @@ def apply_dark_theme(root):
         selectforeground=[("!focus", colors["foreground"])],
     )
     style.configure("Muted.TLabel", foreground=colors["muted"])
-    style.configure("TButton", background=colors["surface"])
+    style.configure(
+        "TButton", background=colors["surface"], padding=round(5 * scale)
+    )
     style.map(
         "TButton",
         background=[
@@ -60,7 +62,8 @@ def apply_dark_theme(root):
         darkcolor=[("pressed", colors["border"])],
     )
     style.configure(
-        "TCombobox", background=colors["surface"], arrowcolor=colors["foreground"]
+        "TCombobox", background=colors["surface"], arrowcolor=colors["foreground"],
+        padding=max(1, round(scale)),
     )
     style.map(
         "TCombobox",
@@ -79,7 +82,8 @@ def apply_dark_theme(root):
         arrowcolor=[("disabled", colors["disabled"])],
     )
     style.configure(
-        "TScrollbar", background=colors["border"], arrowcolor=colors["foreground"]
+        "TScrollbar", background=colors["border"], arrowcolor=colors["foreground"],
+        arrowsize=round(14 * scale),
     )
     style.map(
         "TScrollbar",
@@ -88,6 +92,8 @@ def apply_dark_theme(root):
             ("active", colors["hover"]),
         ],
     )
+
+    style.configure("Sash", sashthickness=round(6 * scale))
 
     # The option database also reaches the combobox's lazily created popup list.
     for widget_class in ("Text", "Listbox"):
@@ -98,7 +104,7 @@ def apply_dark_theme(root):
             "selectForeground": colors["foreground"],
             "highlightBackground": colors["border"],
             "highlightColor": colors["accent"],
-            "highlightThickness": 1,
+            "highlightThickness": max(1, round(scale)),
             "borderWidth": 0,
             "relief": "flat",
         }.items():

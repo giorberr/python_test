@@ -3,7 +3,7 @@
 import runpy
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from practice import app
 
@@ -17,16 +17,27 @@ class EntryPointTests(unittest.TestCase):
         main.assert_called_once_with()
 
     def test_multiprocessing_child_import_does_not_open_another_window(self):
-        with patch.object(app, 'main') as main:
+        with patch.object(app, 'main') as main, patch.object(
+            app, 'enable_windows_dpi_awareness'
+        ) as enable_dpi:
             runpy.run_path(str(ROOT / 'app.py'), run_name='__mp_main__')
         main.assert_not_called()
+        enable_dpi.assert_not_called()
 
     def test_main_builds_the_app_and_enters_event_loop(self):
-        root = Mock()
-        with patch.object(app.tk, 'Tk', return_value=root), patch.object(app, 'PracticeApp') as interface:
+        startup = Mock()
+        root = startup.root
+        startup.create_root.return_value = root
+        with patch.object(
+            app, 'enable_windows_dpi_awareness', startup.enable_dpi
+        ), patch.object(app.tk, 'Tk', startup.create_root), patch.object(
+            app, 'PracticeApp', startup.build_app
+        ):
             app.main()
-        interface.assert_called_once_with(root)
-        root.mainloop.assert_called_once_with()
+        self.assertEqual(startup.mock_calls, [
+            call.enable_dpi(), call.create_root(), call.build_app(root),
+            call.root.mainloop(),
+        ])
 
     def test_progress_path_is_in_data_not_working_directory(self):
         self.assertEqual(app.DATA_FILE, ROOT / 'data' / 'practice_progress.json')

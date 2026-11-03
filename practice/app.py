@@ -8,6 +8,7 @@ from pathlib import Path
 from tkinter import messagebox, scrolledtext, ttk
 
 from .checker import check
+from .display import DisplaySettings, enable_windows_dpi_awareness
 from .editor import CodeEditor
 from .exercises import EXERCISES
 from .progress import ProgressStore
@@ -26,9 +27,10 @@ class PracticeApp:
     def __init__(self, root):
         self.root = root
         root.title("Python Algorithm Practice")
-        root.geometry("1200x800")
-        root.minsize(800, 600)
-        self.style = apply_dark_theme(root)
+        self.display = DisplaySettings(root)
+        self.display.configure_window()
+        px = self.display.pixels
+        self.style = apply_dark_theme(root, scale=self.display.scale)
         self.store = ProgressStore(
             DATA_FILE, (exercise["id"] for exercise in EXERCISES)
         )
@@ -43,14 +45,14 @@ class PracticeApp:
         self._closing = False
         self._tick_after = self._poll_after = None
 
-        header = ttk.Frame(root, padding=10)
+        header = ttk.Frame(root, padding=px(10))
         header.pack(fill="x")
         ttk.Label(header, text="PYTHON PRACTICE", font=("Segoe UI", 18, "bold")).pack(
             side="left"
         )
         self.status = ttk.Label(header, text="", style="Muted.TLabel")
         self.status.pack(side="right")
-        controls = ttk.Frame(root, padding=(10, 0, 10, 8))
+        controls = ttk.Frame(root, padding=(px(10), 0, px(10), px(8)))
         controls.pack(fill="x")
         self.mock_choice = ttk.Combobox(
             controls, values=list(MOCKS), state="readonly", width=49
@@ -58,7 +60,7 @@ class PracticeApp:
         self.mock_choice.current(0)
         self.mock_choice.pack(side="left")
         ttk.Button(controls, text="Start 70-minute mock", command=self.start_mock).pack(
-            side="left", padx=6
+            side="left", padx=px(6)
         )
         ttk.Button(controls, text="Exit mock", command=self.end_mock).pack(side="left")
         self.timer_label = ttk.Label(
@@ -67,8 +69,8 @@ class PracticeApp:
         self.timer_label.pack(side="right")
 
         body = ttk.Panedwindow(root, orient="horizontal")
-        body.pack(fill="both", expand=True, padx=10, pady=(0, 10))
-        sidebar = ttk.Frame(body, padding=5)
+        body.pack(fill="both", expand=True, padx=px(10), pady=(0, px(10)))
+        sidebar = ttk.Frame(body, padding=px(5))
         body.add(sidebar, weight=1)
         ttk.Label(sidebar, text="EXERCISES", font=("Segoe UI", 10, "bold")).pack(
             anchor="w"
@@ -76,16 +78,18 @@ class PracticeApp:
         self.listbox = tk.Listbox(
             sidebar, width=33, exportselection=False, font=("Segoe UI", 10)
         )
-        self.listbox.pack(fill="both", expand=True, pady=5)
+        self.listbox.pack(fill="both", expand=True, pady=px(5))
         self.listbox.bind("<<ListboxSelect>>", self.select)
-        main = ttk.Frame(body, padding=5)
+        main = ttk.Frame(body, padding=px(5))
         body.add(main, weight=4)
-        self.title = ttk.Label(main, font=("Segoe UI", 16, "bold"), wraplength=800)
+        self.title = ttk.Label(
+            main, font=("Segoe UI", 16, "bold"), wraplength=px(800)
+        )
         self.title.pack(anchor="w")
         self.meta = ttk.Label(main, style="Muted.TLabel")
-        self.meta.pack(anchor="w", pady=(2, 8))
-        self.description = ttk.Label(main, wraplength=800, justify="left")
-        self.description.pack(anchor="w", fill="x", pady=(0, 8))
+        self.meta.pack(anchor="w", pady=(px(2), px(8)))
+        self.description = ttk.Label(main, wraplength=px(800), justify="left")
+        self.description.pack(anchor="w", fill="x", pady=(0, px(8)))
         main.bind("<Configure>", self.resize_description)
         ttk.Label(main, text="YOUR PYTHON CODE").pack(anchor="w")
         self.editor = self.create_text_pane(
@@ -97,12 +101,12 @@ class PracticeApp:
         self.run_button = ttk.Button(buttons, text="Run tests", command=self.run_tests)
         self.run_button.pack(side="left")
         ttk.Button(buttons, text="Save draft", command=self.save_current).pack(
-            side="left", padx=6
+            side="left", padx=px(6)
         )
         ttk.Button(buttons, text="Reset to starter", command=self.reset).pack(
             side="left"
         )
-        ttk.Label(main, text="TEST RESULTS").pack(anchor="w", pady=(10, 0))
+        ttk.Label(main, text="TEST RESULTS").pack(anchor="w", pady=(px(10), 0))
         self.results = self.create_text_pane(
             main, height=9, font=("Consolas", 10), state="disabled"
         )
@@ -125,7 +129,7 @@ class PracticeApp:
         )
         text.vbar.pack(side="right", fill="y")
         text.configure(yscrollcommand=text.vbar.set)
-        text.pack(fill="both", expand=True, pady=5)
+        text.pack(fill="both", expand=True, pady=self.display.pixels(5))
         return text
 
     def load(self):
@@ -155,7 +159,8 @@ class PracticeApp:
         return True
 
     def resize_description(self, event):
-        width = max(150, event.width - 12)
+        px = self.display.pixels
+        width = max(px(150), event.width - px(12))
         self.title.config(wraplength=width)
         self.description.config(wraplength=width)
 
@@ -340,6 +345,7 @@ class PracticeApp:
 
 
 def main():
+    enable_windows_dpi_awareness()
     root = tk.Tk()
     PracticeApp(root)
     root.mainloop()

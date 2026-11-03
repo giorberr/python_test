@@ -6,6 +6,7 @@ import time
 import tkinter as tk
 import unittest
 from pathlib import Path
+from tkinter import font
 from unittest.mock import patch
 
 from practice import app
@@ -303,6 +304,56 @@ class AppTests(unittest.TestCase):
         self.gui.resize_description(type("Resize", (), {"width": 450})())
         self.assertLessEqual(int(self.gui.description["wraplength"]), 450)
         self.assertLessEqual(int(self.gui.title["wraplength"]), 450)
+
+
+class DisplayLayoutTests(unittest.TestCase):
+    def test_display_scale_changes_pixels_not_font_points_or_character_sizes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for scale in (1.0, 1.25, 1.5, 2.0):
+                with self.subTest(scale=scale):
+                    try:
+                        root = tk.Tk()
+                    except tk.TclError as error:
+                        self.skipTest(f"Tk display is unavailable: {error}")
+                    root.withdraw()
+                    gui = None
+                    try:
+                        root.tk.call("tk", "scaling", scale * 96 / 72)
+                        tk_scaling = float(root.tk.call("tk", "scaling"))
+                        with patch.object(
+                            app, "DATA_FILE", Path(directory) / "progress.json"
+                        ), patch("practice.display.sys.platform", "win32"), patch(
+                            "practice.display._work_area_bounds",
+                            return_value=(0, 0, 5000, 4000),
+                        ):
+                            gui = app.PracticeApp(root)
+                        root.update_idletasks()
+                        self.assertEqual(gui.display.scale, scale)
+                        self.assertEqual(gui.display.pixels(10), round(10 * scale))
+                        self.assertEqual(
+                            root.winfo_pixels(root.tk.splitlist(
+                                gui.style.lookup("TButton", "padding")
+                            )[0]),
+                            round(5 * scale),
+                        )
+                        self.assertEqual(
+                            root.winfo_pixels(
+                                gui.style.lookup("Vertical.TScrollbar", "arrowsize")
+                            ),
+                            round(14 * scale),
+                        )
+                        self.assertEqual(font.Font(root, font=gui.editor["font"])["size"], 11)
+                        self.assertEqual(font.Font(root, font=gui.results["font"])["size"], 10)
+                        self.assertEqual(int(gui.listbox["width"]), 33)
+                        self.assertEqual(int(gui.editor["height"]), 14)
+                        self.assertAlmostEqual(
+                            float(root.tk.call("tk", "scaling")), tk_scaling
+                        )
+                    finally:
+                        if gui is not None:
+                            gui.close()
+                        else:
+                            root.destroy()
 
 
 if __name__ == "__main__":
