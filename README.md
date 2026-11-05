@@ -9,7 +9,7 @@ app.py                   # Start the desktop app
 practice/                # Application source code
     app.py               # Desktop interface and mock sessions
     display.py           # Windows DPI awareness and scaled layout dimensions
-    editor.py            # Code editor and indentation shortcuts
+    editor.py            # Syntax highlighting, line numbers, and indentation shortcuts
     theme.py             # Shared dark palette and widget styling
     exercises.py         # Editable problem descriptions, starters, and test cases
     checker.py           # Runs your code in a separate process
@@ -35,11 +35,13 @@ Install Python 3.9 or newer with Tkinter (included in the standard Windows Pytho
 python app.py
 ```
 
-The interface uses dark mode by default, including the editor, test results, exercise list, dropdowns, and scrollbars. Native dialogs and window decorations follow your operating system's appearance.
+The interface uses dark mode by default, including the editor, test results, exercise list, dropdowns, and scrollbars. On supported Windows versions, the native title bar also uses dark mode while retaining the standard window controls. Other platforms and unsupported Windows versions keep their normal window decorations. Native dialogs follow your operating system's appearance.
 
 On Windows, the app enables system-DPI awareness before opening the window, keeping text sharp at the system display scale. Window sizes, spacing, and scrollbars scale with DPI, and startup sizes are capped to the usable screen area. Restart the app after changing Windows display scaling. For compatibility with Tk 8.6, this is system-DPI awareness, not live per-monitor rescaling; Windows may still rescale the app on monitors with a different scale.
 
-Choose an exercise, edit its starter function, and select **Run tests**. Results show each case and, for failures, a valid expected example and your actual value or an exception. `print()` output and Python stderr appear below the results. Output and long values are truncated to keep the interface responsive; `input()` is not available—use the function arguments.
+The editor includes Python syntax highlighting and a line-number gutter that stays aligned while scrolling. Highlighting is lexical, so it works while code is unfinished; it is not a correctness check. The editor starts with more space than the results panel. Drag the horizontal divider above **TEST RESULTS** to adjust their heights.
+
+Choose an exercise, edit its starter function, and select the blue **Run tests** button (it displays **Running…** while checking). Results show each case and, for failures, a valid expected example and your actual value or an exception. `print()` output and Python stderr appear below the results. Output and long values are truncated to keep the interface responsive; `input()` is not available—use the function arguments.
 
 ### Editor shortcuts
 

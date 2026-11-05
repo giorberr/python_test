@@ -54,6 +54,7 @@ class AppTests(unittest.TestCase):
             self.gui.running, "The UI did not receive checker results in time"
         )
         self.assertEqual(str(self.gui.run_button["state"]), "normal")
+        self.assertEqual(self.gui.run_button["text"], "Run tests")
 
     def test_widgets_and_all_exercises(self):
         self.assertIsInstance(self.gui.editor, CodeEditor)
@@ -129,6 +130,52 @@ class AppTests(unittest.TestCase):
             with self.subTest(style=name, option=option, state=state):
                 self.assertEqual(style.lookup(name, option, state), DARK_COLORS[color])
 
+    def test_run_button_has_accessible_primary_states(self):
+        self.assertEqual(self.gui.run_button["style"], "Primary.TButton")
+        style = self.gui.style
+        for option, state, color in (
+            ("background", (), "accent"),
+            ("foreground", (), "background"),
+            ("focuscolor", (), "background"),
+            ("background", ("active",), "accent_hover"),
+            ("background", ("pressed",), "accent_pressed"),
+            ("background", ("disabled",), "surface"),
+            ("foreground", ("disabled",), "disabled"),
+        ):
+            with self.subTest(option=option, state=state):
+                self.assertEqual(
+                    style.lookup("Primary.TButton", option, state), DARK_COLORS[color]
+                )
+
+    def test_workspace_divider_can_be_dragged_without_changing_the_draft(self):
+        self.root.deiconify()
+        self.root.update()
+        workspace = self.gui.workspace
+        self.assertEqual(str(workspace["orient"]), "vertical")
+        self.assertEqual(len(workspace.panes()), 2)
+        editor_height = self.gui.editor.winfo_height()
+        results_height = self.gui.results.winfo_height()
+        self.assertGreater(editor_height, results_height)
+        source = self.gui.editor.get("1.0", "end-1c")
+        sash = workspace.sashpos(0)
+        workspace_height = workspace.winfo_height()
+        target = round(workspace_height * 0.45)
+        workspace.event_generate("<ButtonPress-1>", x=20, y=sash + 1)
+        workspace.event_generate("<B1-Motion>", x=20, y=target + 1)
+        workspace.event_generate("<ButtonRelease-1>", x=20, y=target + 1)
+        self.root.update()
+        self.assertAlmostEqual(workspace.sashpos(0), target, delta=2)
+        self.assertLess(self.gui.editor.winfo_height(), editor_height)
+        self.assertGreater(self.gui.results.winfo_height(), results_height)
+        self.assertTrue(self.gui.run_button.winfo_ismapped())
+        self.assertEqual(self.gui.editor.get("1.0", "end-1c"), source)
+        # A wrapped description can resize the workspace, but must not reset
+        # the chosen split; native pane weights distribute that height change.
+        self.gui.show_exercise(1)
+        self.root.update()
+        expected = target + (workspace.winfo_height() - workspace_height) * 3 / 4
+        self.assertAlmostEqual(workspace.sashpos(0), expected, delta=2)
+
     def test_combobox_popup_uses_dark_colors(self):
         popup = self.root.tk.call(
             "ttk::combobox::PopdownWindow", str(self.gui.mock_choice)
@@ -185,6 +232,7 @@ class AppTests(unittest.TestCase):
         )
         self.gui.run_tests()
         self.assertEqual(str(self.gui.run_button["state"]), "disabled")
+        self.assertEqual(self.gui.run_button["text"], "Running…")
         self.wait_for_run()
         result_text = self.gui.results.get("1.0", "end-1c")
         self.assertIn("8 / 8 tests passed", result_text)
@@ -346,6 +394,16 @@ class DisplayLayoutTests(unittest.TestCase):
                         self.assertEqual(font.Font(root, font=gui.results["font"])["size"], 10)
                         self.assertEqual(int(gui.listbox["width"]), 33)
                         self.assertEqual(int(gui.editor["height"]), 14)
+                        assert isinstance(gui.editor, CodeEditor)
+                        self.assertEqual(gui.editor._gutter_padding, round(8 * scale))
+                        self.assertEqual(int(gui.results["height"]), 5)
+                        root.deiconify()
+                        root.update()
+                        self.assertGreater(
+                            gui.editor.winfo_height(), gui.results.winfo_height()
+                        )
+                        self.assertTrue(gui.editor.gutter.winfo_ismapped())
+                        self.assertTrue(gui.run_button.winfo_ismapped())
                         self.assertAlmostEqual(
                             float(root.tk.call("tk", "scaling")), tk_scaling
                         )

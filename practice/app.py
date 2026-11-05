@@ -91,14 +91,22 @@ class PracticeApp:
         self.description = ttk.Label(main, wraplength=px(800), justify="left")
         self.description.pack(anchor="w", fill="x", pady=(0, px(8)))
         main.bind("<Configure>", self.resize_description)
-        ttk.Label(main, text="YOUR PYTHON CODE").pack(anchor="w")
+        self.workspace = ttk.Panedwindow(main, orient="vertical")
+        self.workspace.pack(fill="both", expand=True)
+        editor_pane = ttk.Frame(self.workspace)
+        results_pane = ttk.Frame(self.workspace)
+        self.workspace.add(editor_pane, weight=3)
+        self.workspace.add(results_pane, weight=1)
+        ttk.Label(editor_pane, text="YOUR PYTHON CODE").pack(anchor="w")
+        buttons = ttk.Frame(editor_pane)
+        buttons.pack(side="bottom", fill="x", pady=(px(4), 0))
         self.editor = self.create_text_pane(
-            main, height=14, font=("Consolas", 11), undo=True, wrap="none",
-            text_class=CodeEditor,
+            editor_pane, height=14, font=("Consolas", 11), undo=True, wrap="none",
+            text_class=CodeEditor, scale=self.display.scale,
         )
-        buttons = ttk.Frame(main)
-        buttons.pack(fill="x")
-        self.run_button = ttk.Button(buttons, text="Run tests", command=self.run_tests)
+        self.run_button = ttk.Button(
+            buttons, text="Run tests", command=self.run_tests, style="Primary.TButton"
+        )
         self.run_button.pack(side="left")
         ttk.Button(buttons, text="Save draft", command=self.save_current).pack(
             side="left", padx=px(6)
@@ -106,9 +114,14 @@ class PracticeApp:
         ttk.Button(buttons, text="Reset to starter", command=self.reset).pack(
             side="left"
         )
-        ttk.Label(main, text="TEST RESULTS").pack(anchor="w", pady=(px(10), 0))
+        results_header = ttk.Frame(results_pane, padding=(0, px(4), 0, 0))
+        results_header.pack(fill="x")
+        ttk.Label(results_header, text="TEST RESULTS").pack(side="left")
+        ttk.Label(
+            results_header, text="Drag divider to resize", style="Muted.TLabel"
+        ).pack(side="right")
         self.results = self.create_text_pane(
-            main, height=9, font=("Consolas", 10), state="disabled"
+            results_pane, height=5, font=("Consolas", 10), state="disabled"
         )
         self.refresh_list()
         self.listbox.selection_set(0)
@@ -237,7 +250,7 @@ class PracticeApp:
         version = self.reset_versions.get(index, 0)
         code = self.editor.get("1.0", "end-1c")
         self.running = True
-        self.run_button.config(state="disabled")
+        self.run_button.config(state="disabled", text="Running…")
         self.set_results("Running tests…")
 
         def work():
@@ -258,7 +271,7 @@ class PracticeApp:
             pass
         else:
             self.running = False
-            self.run_button.config(state="normal")
+            self.run_button.config(state="normal", text="Run tests")
             if "error" in result:
                 text = result["error"]
             else:
